@@ -19,3 +19,4 @@
 11. joint_interface_example.py : example movement script for python
 
 
+dont forget to change thee CMakeLists.txt file

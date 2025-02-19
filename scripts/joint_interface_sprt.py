@@ -31,12 +31,16 @@ from math import sin, pi
 import numpy
 from dqrobotics import *  # Despite what PyCharm might say, this is very much necessary or DQs will not be recognized
 from dqrobotics.utils.DQ_Math import deg2rad
+#from dqrobotics.interfaces.vrep import DQ_VrepInterface
+from dqrobotics.interfaces.coppeliasim import DQ_CoppeliaSimInterfaceZMQ
 
 from sas_common import rclcpp_init, rclcpp_Node, rclcpp_spin_some, rclcpp_shutdown
 from sas_robot_driver import RobotDriverClient
 
 from sas_core import Clock, Statistics
 
+
+vi = DQ_CoppeliaSimInterfaceZMQ()
 
 def main(args=None):
     try:
@@ -49,6 +53,8 @@ def main(args=None):
 
         # Initialize the RobotDriverClient
         rdi = RobotDriverClient(node, 'ur_composed')
+
+        
 
         # Wait for RobotDriverClient to be enabled
         while not rdi.is_enabled():
@@ -64,6 +70,13 @@ def main(args=None):
         joint_positions = rdi.get_joint_positions()
         print(f"joint positions = {joint_positions}")
 
+
+        #dream = vi.get_object_pose(trial)
+
+        dream = vi.get_object_pose('trial',DQ_CoppeliaSimInterfaceZMQ)
+
+        print(f"naseels_pose={dream}")
+
         # For some iterations. Note that this can be stopped with CTRL+C.
         for i in range(0, 5000):
             clock.update_and_sleep()
@@ -74,6 +87,7 @@ def main(args=None):
             rdi.send_target_joint_positions(target_joint_positions)
 
             rclcpp_spin_some(node)
+
 
         ################## editing the code till here ##########################
 
