@@ -25,14 +25,19 @@
 # #######################################################################################
 """
 import time
-
+import numpy as np
 from math import sin, pi
 
 import numpy
 from dqrobotics import *  # Despite what PyCharm might say, this is very much necessary or DQs will not be recognized
 from dqrobotics.utils.DQ_Math import deg2rad
-#from dqrobotics.interfaces.vrep import DQ_VrepInterface
+
+########### added by me #############
+
 from dqrobotics.interfaces.coppeliasim import DQ_CoppeliaSimInterfaceZMQ
+from dqrobotics.robot_control import DQ_ClassicQPController
+
+######################################
 
 from sas_common import rclcpp_init, rclcpp_Node, rclcpp_spin_some, rclcpp_shutdown
 from sas_robot_driver import RobotDriverClient
@@ -55,28 +60,49 @@ def main(args=None):
         rdi = RobotDriverClient(node, 'ur_composed')
         vi.connect("192.168.1.211", 23000, 500, 1)
 
-        
-
         # Wait for RobotDriverClient to be enabled
         while not rdi.is_enabled():
             rclcpp_spin_some(node)
             time.sleep(0.1)
 
         # Get topic information
-        print(f"topic prefix = {rdi.get_topic_prefix()}")
-
-        ################## editing the code from here ##########################
+        print(f"topic prefix = {rdi.get_topic_prefix()}") 
 
         # Read the values sent by the RobotDriverServer
         joint_positions = rdi.get_joint_positions()
         print(f"joint positions = {joint_positions}")
 
+        ################## editing the code from here ##########################
 
-        #dream = vi.get_object_pose(trial)
+        ################################### Initializing main robot
+        # Define DH parameters
+        UR3e_DH_theta = np.array([np.pi, 0, 0, 0, 0, np.pi/2])
+        UR3e_DH_d = np.array([0, 0, 0, 0.11188, 0.08535, 0.0921])
+        UR3e_DH_a = np.array([0, -0.24335, -0.2132 - 0.00435, 0, 0, 0])
+        UR3e_DH_alpha = np.array([np.pi/2, 0, 0, np.pi/2, -np.pi/2, -np.pi/2])
+
+        # Define joint types as revolute
+        UR3e_DH_type = np.full((1, 6), DQ_JointType.REVOLUTE, dtype=float)
+
+        # Combine into a single matrix
+        UR3e_DH_matrix = np.vstack([UR3e_DH_theta, UR3e_DH_d, UR3e_DH_a, UR3e_DH_alpha, UR3e_DH_type])
+
+        ### set base reference
+
+
+        ### controller defination
+        qp_solver = 
+        translation_controller = DQ_ClassicQPController('ur_composed',)
+
+
 
         dream = vi.get_object_pose('trial',"trial")
 
+
+
         print(f"naseels_pose={dream}")
+
+        ################# from before ##########################################
 
         # For some iterations. Note that this can be stopped with CTRL+C.
         for i in range(0, 5000):
