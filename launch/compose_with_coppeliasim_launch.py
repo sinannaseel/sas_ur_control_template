@@ -28,7 +28,7 @@ def generate_launch_description():
                 "use_real_robot": True,
                 "use_coppeliasim": True,
                 "vrep_robot_joint_names": joint_names,
-                "vrep_ip": "192.168.1.211",
+                "vrep_ip": "192.168.0.187",
                 "vrep_port": 23000,
                 "vrep_dynamically_enabled": True,
                 "override_joint_limits_with_robot_parameter_file": False,
