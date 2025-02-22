@@ -2,11 +2,8 @@
 #include <sas_core/sas_clock.hpp>
 #include <sas_robot_driver/sas_robot_driver_client.hpp>
 #include <dqrobotics/utils/DQ_Math.h>
-#include <dqrobotics/DQ.h>
-#include <dqrobotics/interfaces/coppeliasim/DQ_CoppeliaSimInterface.h>
 
 using namespace DQ_robotics;
-using namespace Eigen;
 
 #include<signal.h>
 static std::atomic_bool kill_this_process(false);
@@ -39,11 +36,6 @@ int main(int argc, char** argv)
         rclcpp::spin_some(node);
     }
 
-    // Here is the code you can edit (Start) ------------------------------------------------------
-
-    // trying to initialize dq robotics    
-    //auto vi =std::DQ_CoppeliaSimInterfaceZMQ();
-
     // Get topic information
     RCLCPP_INFO_STREAM(node->get_logger(),"topic_prefix = " << rdi.get_topic_prefix());
 
@@ -51,10 +43,6 @@ int main(int argc, char** argv)
     auto joint_positions = rdi.get_joint_positions();
     RCLCPP_INFO_STREAM(node->get_logger(),"joint positions = " << joint_positions);
 
- 
-    // Trying to get object pose (By naseel)
-    //auto naseel = vi.get_object_pose('trial');
-    //RCLCPP_INFO_STREAM(node->get_logger(),"object position is = " << naseel);
 
     // For some iterations. Note that this can be stopped with CTRL+C.
     for(auto i=0;i<5000;++i)
@@ -68,8 +56,6 @@ int main(int argc, char** argv)
 
         rclcpp::spin_some(node);
     }
-
-    // Here is the code you can edit (end) ------------------------------------------------------
 
     // Statistics
     RCLCPP_INFO_STREAM(node->get_logger(),"Statistics for the entire loop");

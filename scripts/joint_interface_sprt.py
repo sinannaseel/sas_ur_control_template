@@ -25,22 +25,29 @@
 # #######################################################################################
 """
 import time
+import numpy as np
 
 from math import sin, pi
 
 import numpy
 from dqrobotics import *  # Despite what PyCharm might say, this is very much necessary or DQs will not be recognized
 from dqrobotics.utils.DQ_Math import deg2rad
-#from dqrobotics.interfaces.vrep import DQ_VrepInterface
+
+########### added by me #############
+
+from dqrobotics.utils import DQ_Geometry
 from dqrobotics.interfaces.coppeliasim import DQ_CoppeliaSimInterfaceZMQ
+from dqrobotics.robot_control import DQ_ClassicQPController
+from dqrobotics.solvers import DQ_QuadraticProgrammingSolver
+from dqrobotics import *
+
+###########
 
 from sas_common import rclcpp_init, rclcpp_Node, rclcpp_spin_some, rclcpp_shutdown
 from sas_robot_driver import RobotDriverClient
 
 from sas_core import Clock, Statistics
 
-
-vi = DQ_CoppeliaSimInterfaceZMQ()
 
 def main(args=None):
     try:
@@ -53,9 +60,6 @@ def main(args=None):
 
         # Initialize the RobotDriverClient
         rdi = RobotDriverClient(node, 'ur_composed')
-        vi.connect("192.168.1.211", 23000, 500, 1)
-
-        
 
         # Wait for RobotDriverClient to be enabled
         while not rdi.is_enabled():
@@ -65,32 +69,96 @@ def main(args=None):
         # Get topic information
         print(f"topic prefix = {rdi.get_topic_prefix()}")
 
-        ################## editing the code from here ##########################
-
         # Read the values sent by the RobotDriverServer
         joint_positions = rdi.get_joint_positions()
         print(f"joint positions = {joint_positions}")
 
+        ################################ trying to code boss
 
-        #dream = vi.get_object_pose(trial)
+        # trying to connect
+        vi = DQ_CoppeliaSimInterfaceZMQ()
+        vi.connect("192.168.0.187", 23000, 500, 1)
+
+        # Define joint names
+        jointnames = ['UR3_joint1', 'UR3_joint2', 'UR3_joint3', 
+                    'UR3_joint4', 'UR3_joint5', 'UR3_joint6']
+        
+        # Define DH parameters
+        UR3e_DH_theta = np.array([np.pi, 0, 0, 0, 0, np.pi/2])
+        UR3e_DH_d = np.array([0, 0, 0, 0.11188, 0.08535, 0.0921])
+        UR3e_DH_a = np.array([0, -0.24335, -0.2132 - 0.00435, 0, 0, 0])
+        UR3e_DH_alpha = np.array([np.pi/2, 0, 0, np.pi/2, -np.pi/2, -np.pi/2])
+        UR3e_DH_type = np.full((1, 6), DQ_JointType.REVOLUTE, dtype=float)
+        
+        # Stack DH parameters into a 5x6 matrix
+        UR3e_DH_matrix = np.vstack([UR3e_DH_theta, UR3e_DH_d, UR3e_DH_a, UR3e_DH_alpha, UR3e_DH_type])
+
+        robot = DQ_SerialManipulatorDH(UR3e_DH_matrix)
+        n = robot.get_dim_configuration_space()  # Configuration space dimension
+
+        # Define joint limits (adjust if necessary)
+        qmin = np.array([-np.pi, -np.pi, -np.pi/2, -np.pi, -np.pi/2, -np.pi/2])
+        qmax = np.array([ np.pi,  np.pi,  np.pi/2,  np.pi,  np.pi/2,  np.pi/2])
+
+        # Set base reference frame from simulation object pose (assumes object name 'UR3_joint1')
+        xbase = vi.get_object_pose('UR3_joint1')
+        robot.set_reference_frame(xbase)
+        robot.set_base_frame(xbase)
+        vi.set_object_pose('base', xbase)
+        
+        # =============================================================================
+        # ======= Controller Definition ===============================================
+        # =============================================================================
+
+        qp_solver = DQ_QuadraticProgrammingSolver()
+        translation_controller = DQ_ClassicQPController('ur_composed',)
+        translation_controller = DQ_ClassicQPController(robot, qp_solver)
+        translation_controller.set_gain(10)      # Controller gain
+        translation_controller.set_damping(1)      # Damping factor
+        translation_controller.set_control_objective(ControlObjective.Translation)
+
+        eta_d = 1  # VFI gain (if applicable)
+
+        # =============================================================================
+        # ======= Desired Data & Pose =================================================
+        # =============================================================================
+
 
         dream = vi.get_object_pose('trial',"trial")
+        # Get the goal and start poses from the simulation environment
+        goal_pose = vi.get_object_pose('trial','trial')
+        goal_translation = translation(goal_pose)
+        #Start = translation(vi.get_object_pose('/Start_position'))
 
-        print(f"naseels_pose={dream}")
+        # =============================================================================
+        # ======= Simulation Parameters ===============================================
+        # =============================================================================
+
+        tau = 0.01      # Sampling time [s]
+        final_time = 5  # Total simulation time ``[s]
+        latency_counter = 0
+        j = 1
+
+        # Initialize arrays to store error values (if needed)
+        error_signal_values = []
+        error_special_values = []
+
+
+        print("Naseel is great")
+
+        # ======================================================the original code starts here
+
 
         # For some iterations. Note that this can be stopped with CTRL+C.
         for i in range(0, 5000):
             clock.update_and_sleep()
 
             # Move the joints
-            target_joint_positions = joint_positions + deg2rad([30.0 * sin(i / (50.0 * pi))] * 6)
+            target_joint_positions = joint_positions + deg2rad([10.0 * sin(i / (50.0 * pi))] * 6)
             # print(target_joint_positions)
             rdi.send_target_joint_positions(target_joint_positions)
 
             rclcpp_spin_some(node)
-
-
-        ################## editing the code till here ##########################
 
         # Statistics
         print("Statistics for the entire loop")

@@ -22,7 +22,7 @@ def generate_launch_description():
         dummy_with_coppeliasim_launch,
         Node(
             package='sas_ur_control_template',
-            executable="joint_interface_sprt.py",
+            executable='joint_interface_sprt.py',
             output='screen',
             emulate_tty=True,
             name='sas_ur_control_template_joint_interface_example'

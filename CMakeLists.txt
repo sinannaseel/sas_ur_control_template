@@ -21,7 +21,7 @@ find_package(sas_core REQUIRED)
 set(RCLCPP_LOCAL_BINARY_NAME joint_interface_example_cpp)
 
 add_executable(${RCLCPP_LOCAL_BINARY_NAME}
-   src/joint_interface_sprt.cpp
+   src/joint_interface_example.cpp
     )
 
 ament_target_dependencies(${RCLCPP_LOCAL_BINARY_NAME}
